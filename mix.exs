@@ -32,6 +32,7 @@ defmodule AppConfig.Mixfile do
 
   defp package do
     [files: ["lib", "config", "test", "mix.exs", "README*", "LICENSE*"],
+     description: "Elixir configuration module that simplifies access to environment variables",
      maintainers: ["Juan Jose Comellas"],
      licenses: ["Apache 2.0"],
      links: %{"GitHub" => "https://github.com/jcomellas/app_config"}]

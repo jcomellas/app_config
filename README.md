@@ -1,6 +1,6 @@
 # AppConfig
 
-Helper configuration module for Elixir that simplifies access to environment
+Helper configuration module for Elixir that simplifies access to OS environment
 variables.
 
 
