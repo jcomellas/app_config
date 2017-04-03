@@ -92,7 +92,7 @@ be valid:
 
 ```elixir
 "localhost" = MyConfig.get_env(:db_host)
-5432 = MyConfig.get_integer(:db_port)
+5432 = MyConfig.get_env_integer(:db_port)
 {:ok, "my_user"} = MyConfig.fetch_env(:db_user)
 "guess_me" = MyConfig.fetch_env!(:db_password)
 "my_database" = MyConfig.get_env(:db_name, "unknown")

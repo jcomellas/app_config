@@ -84,8 +84,8 @@ defmodule AppConfig do
           AppConfig.get_env(unquote(app), key, value)
         end
 
-        def get_integer(key, value \\ nil) do
-          AppConfig.get_integer(unquote(app), key, value)
+        def get_env_integer(key, value \\ nil) do
+          AppConfig.get_env_integer(unquote(app), key, value)
         end
 
         def fetch_env(key) do
