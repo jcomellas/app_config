@@ -39,7 +39,7 @@ defined in the following way:
 
 ```elixir
 defmodule MyConfig do
-  use AppConfig, app: :my_app
+  use AppConfig, otp_app: :my_app
   # [...]
 end
 ```

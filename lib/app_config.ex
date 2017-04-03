@@ -25,7 +25,7 @@ defmodule AppConfig do
   configuration values, and has to be defined in the following way:
 
       defmodule MyConfig do
-        use #{inspect __MODULE__}, app: :my_app
+        use #{inspect __MODULE__}, otp_app: :my_app
         # [...]
       end
 

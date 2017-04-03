@@ -1,6 +1,6 @@
 defmodule MyTestApp do
   use Application
-  use AppConfig, app: :my_test_app
+  use AppConfig, otp_app: :my_test_app
 
   # Dummy start/2 function to avoid compilation warnings
   def start(_start_type, _start_args) do
