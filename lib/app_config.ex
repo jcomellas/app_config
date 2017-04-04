@@ -29,7 +29,7 @@ defmodule AppConfig do
         # [...]
       end
 
-  The `app` argument contains the name of the application where the functions
+  The `otp_app` argument contains the name of the application where the functions
   (added by the macro from the `#{inspect __MODULE__}` module) will look for
   configuration parameters.
 
@@ -77,7 +77,7 @@ defmodule AppConfig do
 
   @doc false
   defmacro __using__(opts) do
-    app = opts[:app] || Application.get_application(__CALLER__.module)
+    app = opts[:otp_app] || Application.get_application(__CALLER__.module)
     if app do
       quote do
         def get_env(key, value \\ nil) do
@@ -97,7 +97,7 @@ defmodule AppConfig do
         end
       end
     else
-      raise ArgumentError, "'app' argument was not present in use of the " <>
+      raise ArgumentError, "'otp_app' argument was not present in use of the " <>
         "'#{inspect __MODULE__}' module and could not be deduced from the " <>
         "'#{inspect __CALLER__.module}' caller module"
     end
