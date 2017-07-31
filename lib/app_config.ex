@@ -80,12 +80,12 @@ defmodule AppConfig do
     app = opts[:otp_app] || Application.get_application(__CALLER__.module)
     if app do
       quote do
-        def get_env(key, value \\ nil) do
-          AppConfig.get_env(unquote(app), key, value)
+        def get_env(key, default \\ nil) do
+          AppConfig.get_env(unquote(app), key, default)
         end
 
-        def get_env_integer(key, value \\ nil) do
-          AppConfig.get_env_integer(unquote(app), key, value)
+        def get_env_integer(key, default \\ nil) do
+          AppConfig.get_env_integer(unquote(app), key, default)
         end
 
         def fetch_env(key) do
@@ -104,8 +104,10 @@ defmodule AppConfig do
   end
 
   @doc """
-  Returns a tuple with the value for `key` in the application's configuration
-  or in the OS environment.
+  Returns a tuple with the value for `key` in an application's environment,
+  in a keyword list or in the OS environment. The first argument can either be
+  an atom with the name of the application or a keyword list with the different
+  configuration values.
 
   ## Returns
 
@@ -119,29 +121,36 @@ defmodule AppConfig do
       {:ok, "VALUE"} = #{inspect __MODULE__}.fetch_env(:my_app, :test_var)
 
   """
-  @spec fetch_env(app, key) :: {:ok, value} | :error
-  def fetch_env(app, key) when is_atom(app) and is_atom(key) do
-    case :application.get_env(app, key) do
+  @spec fetch_env(app | Keyword.t, key) :: {:ok, value} | :error
+  def fetch_env(env, key) when (is_atom(env) or is_list(env)) and is_atom(key) do
+    case fetch(env, key) do
       {:ok, {:system, env_var}} ->
         case System.get_env(env_var) do
           nil -> :error
-          val -> {:ok, val}
+          value -> {:ok, value}
         end
-      {:ok, {:system, env_var, preconfigured_default}} ->
+      {:ok, {:system, env_var, default}} ->
         case System.get_env(env_var) do
-          nil -> {:ok, preconfigured_default}
-          val -> {:ok, val}
+          nil -> {:ok, default}
+          value -> {:ok, value}
         end
-      :undefined ->
-        :error
-      {:ok, _val} = result ->
+      result ->
         result
     end
   end
 
+  defp fetch(app, key) when is_atom(app) do
+    Application.fetch_env(app, key)
+  end
+  defp fetch(list, key) when is_list(list) do
+    Keyword.fetch(list, key)
+  end
+
   @doc """
-  Returns the value for `key` in the application's configuration or in the
-  OS environment.
+  Returns the value for `key` in an application's environment, in a keyword list
+  or in the OS environment. The first argument can either be an atom with the
+  name of the application or a keyword list with the different configuration
+  values.
 
   ## Returns
 
@@ -154,7 +163,7 @@ defmodule AppConfig do
       "VALUE" = #{inspect __MODULE__}.fetch_env!(:my_app, :test_var)
 
   """
-  @spec fetch_env!(app, key) :: value | no_return
+  @spec fetch_env!(app | Keyword.t, key) :: value | no_return
   def fetch_env!(app, key) do
     case fetch_env(app, key) do
       {:ok, value} ->
@@ -167,8 +176,12 @@ defmodule AppConfig do
   end
 
   @doc """
-  Retrieves a value from an application's configuration or from the OS
-  environment. If the value is not present, the `default` value is returned.
+  Retrieves a value from an application's configuration, form a keyword list or
+  from the OS environment. If the value is not present, the `default` value is
+  returned.
+
+  The first argument can either be an atom with the name of the application or
+  a keyword list with the different configuration values.
 
   If the application's parameter was assigned an expression like the following
   one:
@@ -197,7 +210,7 @@ defmodule AppConfig do
       iex> :default = #{inspect __MODULE__}.get_env(:myapp, :missing_var, :default)
       :default
   """
-  @spec get_env(app, key, value | nil) :: value
+  @spec get_env(app | Keyword.t, key, value | nil) :: value
   def get_env(app, key, default \\ nil) do
     case fetch_env(app, key) do
       {:ok, value} -> value
@@ -214,7 +227,7 @@ defmodule AppConfig do
       5432 = #{inspect __MODULE__}.get_env_integer(:my_app, :db_port)
 
   """
-  @spec get_env_integer(app, key, integer) :: integer
+  @spec get_env_integer(app | Keyword.t, key, integer) :: integer
   def get_env_integer(app, key, default \\ nil) do
     case get_env(app, key, nil) do
       nil ->

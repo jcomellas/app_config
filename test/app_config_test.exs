@@ -12,7 +12,7 @@ defmodule AppConfigTest do
   use ExUnit.Case
   doctest AppConfig
 
-  test "application environment" do
+  test "value from application environment" do
     test_val = "12345"
     :ok = Application.put_env(:my_test_app, :test_var, test_val)
     assert {:ok, test_val} == MyTestApp.fetch_env(:test_var)
@@ -24,7 +24,19 @@ defmodule AppConfigTest do
     assert %ArgumentError{} = catch_error(MyTestApp.fetch_env!(:unknown_var))
   end
 
-  test "system environment" do
+  test "value from keyword list" do
+    test_val = "12345"
+    env = [dummy1: "ABC", test_var: test_val, dummy2: "DEF"]
+    assert {:ok, test_val} == AppConfig.fetch_env(env, :test_var)
+    assert :error == AppConfig.fetch_env(env, :unknown_var)
+    assert test_val == AppConfig.get_env(env, :test_var)
+    assert 12345 == AppConfig.get_env_integer(env, :test_var)
+    assert nil == AppConfig.get_env(env, :unknown_var)
+    assert test_val == AppConfig.fetch_env!(env, :test_var)
+    assert %ArgumentError{} = catch_error(AppConfig.fetch_env!(env, :unknown_var))
+  end
+
+  test "value from system environment" do
     env_var = "TEST_VAR"
     test_val = "12345"
     :ok = System.put_env(env_var, test_val)
@@ -38,7 +50,21 @@ defmodule AppConfigTest do
     assert %ArgumentError{} = catch_error(MyTestApp.fetch_env!(:unknown_var))
   end
 
-  test "system environment with default value" do
+  test "value from system environment through keyword list" do
+    env_var = "TEST_VAR"
+    test_val = "12345"
+    env = [dummy1: "ABC", dummy2: "DEF", test_var: {:system, env_var}]
+    :ok = System.put_env(env_var, test_val)
+    assert {:ok, test_val} == AppConfig.fetch_env(env, :test_var)
+    assert :error == AppConfig.fetch_env(env, :unknown_var)
+    assert test_val == AppConfig.get_env(env, :test_var)
+    assert 12345 == AppConfig.get_env_integer(env, :test_var)
+    assert nil == AppConfig.get_env(env, :unknown_var)
+    assert test_val == AppConfig.fetch_env!(env, :test_var)
+    assert %ArgumentError{} = catch_error(AppConfig.fetch_env!(env, :unknown_var))
+  end
+
+  test "value from system environment with default" do
     env_var = "TEST_VAR"
     test_val = "12345"
     :ok = Application.put_env(:my_test_app, :test_var, {:system, env_var, test_val})
@@ -49,5 +75,18 @@ defmodule AppConfigTest do
     assert nil == MyTestApp.get_env(:unknown_var)
     assert test_val == MyTestApp.fetch_env!(:test_var)
     assert %ArgumentError{} = catch_error(MyTestApp.fetch_env!(:unknown_var))
+  end
+
+  test "value from system environment through keyword list with default" do
+    env_var = "TEST_VAR"
+    test_val = "12345"
+    env = [test_var: {:system, env_var, test_val}, dummy1: "ABC", dummy2: "DEF"]
+    assert {:ok, test_val} == AppConfig.fetch_env(env, :test_var)
+    assert :error == AppConfig.fetch_env(env, :unknown_var)
+    assert test_val == AppConfig.get_env(env, :test_var)
+    assert 12345 == AppConfig.get_env_integer(env, :test_var)
+    assert nil == AppConfig.get_env(env, :unknown_var)
+    assert test_val == AppConfig.fetch_env!(env, :test_var)
+    assert %ArgumentError{} = catch_error(AppConfig.fetch_env!(env, :unknown_var))
   end
 end
