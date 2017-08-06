@@ -74,6 +74,7 @@ defmodule AppConfig do
   @type app :: Application.app
   @type key :: Application.key
   @type value :: Application.value
+  @type var :: String.t
 
   @doc false
   defmacro __using__(opts) do
@@ -123,19 +124,8 @@ defmodule AppConfig do
   """
   @spec fetch_env(app | Keyword.t, key) :: {:ok, value} | :error
   def fetch_env(env, key) when (is_atom(env) or is_list(env)) and is_atom(key) do
-    case fetch(env, key) do
-      {:ok, {:system, env_var}} ->
-        case System.get_env(env_var) do
-          nil -> :error
-          value -> {:ok, value}
-        end
-      {:ok, {:system, env_var, default}} ->
-        case System.get_env(env_var) do
-          nil -> {:ok, default}
-          value -> {:ok, value}
-        end
-      result ->
-        result
+    with {:ok, value} <- fetch(env, key) do
+      get_env_value(value)
     end
   end
 
@@ -144,6 +134,56 @@ defmodule AppConfig do
   end
   defp fetch(list, key) when is_list(list) do
     Keyword.fetch(list, key)
+  end
+
+  @doc """
+  Retrieves the value from and OS environment variable when it receives a tuple
+  like the following as argument:
+
+      {:system, "VAR"}
+
+  An optional default value can be returned when the environment variable is
+  not set to a specific value by using the following format:
+
+      {:system, "VAR", "default"}
+
+  If any other value is passed, that's what the function will return.
+
+  ## Returns
+
+  A tuple with the `:ok` atom as the first element and the value of the
+  OS environment variable or the value that was passed if successful. It
+  returns `:error` if the OS environment variable was not set.
+
+  ## Example
+
+      iex> System.put_env("MY_VAR", "MY_VALUE")
+      ...> #{inspect __MODULE__}.get_env_value({:system, "MY_VAR"})
+      {:ok, "MY_VALUE"}
+      iex> #{inspect __MODULE__}.get_env_value({:system, "MY_UNSET_VAR"})
+      :error
+      iex> #{inspect __MODULE__}.get_env_value({:system, "MY_UNSET_VAR", "DEFAULT"})
+      {:ok, "DEFAULT"}
+      iex> #{inspect __MODULE__}.get_env_value("VALUE")
+      {:ok, "VALUE"}
+
+  """
+  @spec get_env_value({:system, var} | {:system, var, String.t} | term)
+    :: {:ok, term} | :error
+  def get_env_value({:system, var}) do
+    case System.get_env(var) do
+      nil -> :error
+      value -> {:ok, value}
+    end
+  end
+  def get_env_value({:system, var, default}) do
+    case System.get_env(var) do
+      nil -> {:ok, default}
+      value -> {:ok, value}
+    end
+  end
+  def get_env_value(value) do
+    {:ok, value}
   end
 
   @doc """
