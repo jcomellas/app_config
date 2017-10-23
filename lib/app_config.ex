@@ -6,7 +6,9 @@ defmodule AppConfig do
       def fetch_env(key) :: {:ok, value} | :error
       def fetch_env!(key) :: value | no_return
       def get_env(key, value | nil) :: value
-      def get_env_integer(key, integer | nil) :: integer
+      def get_env_boolean(key, boolean | nil) :: boolean | nil
+      def get_env_integer(key, integer | nil) :: integer | nil
+      def get_env_float(key, float | nil) :: float | nil
 
   These functions fetch values from an application's environment or from
   operating system (OS) environment variables. The values will be retrieved
