@@ -39,10 +39,12 @@ defmodule AppConfig do
 
       config :my_app,
         db_host: {:system, "DB_HOST", "localhost"},
-        db_port: {:system, "DB_PORT", "5432"}
+        db_port: {:system, "DB_PORT", 5432}
         db_user: {:system, "DB_USER"},
         db_password: {:system, "DB_PASSWORD"},
-        db_name: "my_database"
+        db_name: "my_database",
+        db_retry_interval: {:system, "DB_RETRY_INTERVAL", 0.5}
+        db_replication: {:system, "DB_REPLICATION", false}
 
   And the following environment variables:
 
@@ -85,8 +87,16 @@ defmodule AppConfig do
           AppConfig.get_env(unquote(app), key, default)
         end
 
+        def get_env_boolean(key, default \\ nil) do
+          AppConfig.get_env_boolean(unquote(app), key, default)
+        end
+
         def get_env_integer(key, default \\ nil) do
           AppConfig.get_env_integer(unquote(app), key, default)
+        end
+
+        def get_env_float(key, default \\ nil) do
+          AppConfig.get_env_float(unquote(app), key, default)
         end
 
         def fetch_env(key) do
@@ -250,11 +260,47 @@ defmodule AppConfig do
       iex> :default = #{inspect __MODULE__}.get_env(:myapp, :missing_var, :default)
       :default
   """
-  @spec get_env(app | Keyword.t, key, value | nil) :: value
+  @spec get_env(app | Keyword.t, key, value | nil) :: value | nil
   def get_env(app, key, default \\ nil) do
     case fetch_env(app, key) do
       {:ok, value} -> value
       :error       -> default
+    end
+  end
+
+  @doc """
+  Same as `get_env/3`, but returns the result as a boolean. If the value
+  cannot be found or it cannot converted to a boolean, the `default` value is
+  returned instead.
+
+  ## Example
+
+      false = #{inspect __MODULE__}.get_env_boolean(:my_app, :db_replication)
+
+  """
+  @spec get_env_boolean(app | Keyword.t, key, boolean | nil) :: boolean | nil
+  def get_env_boolean(app, key, default \\ nil) do
+    case fetch_env(app, key) do
+      {:ok, flag} when is_boolean(flag) ->
+        flag
+      {:ok, value} when is_binary(value) ->
+        value
+        |> String.downcase()
+        |> case do
+          "0"        -> false
+          "false"    -> false
+          "no"       -> false
+          "off"      -> false
+          "disabled" -> false
+          "1"        -> true
+          "true"     -> true
+          "yes"      -> true
+          "on"       -> true
+          "enabled"  -> true
+          _          -> default
+        end
+      :error ->
+        default
     end
   end
 
@@ -267,18 +313,42 @@ defmodule AppConfig do
       5432 = #{inspect __MODULE__}.get_env_integer(:my_app, :db_port)
 
   """
-  @spec get_env_integer(app | Keyword.t, key, integer) :: integer
+  @spec get_env_integer(app | Keyword.t, key, integer | nil) :: integer | nil
   def get_env_integer(app, key, default \\ nil) do
-    case get_env(app, key, nil) do
-      nil ->
+    case fetch_env(app, key) do
+      {:ok, number} when is_integer(number) ->
+        number
+      {:ok, value} when is_binary(value) ->
+        case Integer.parse(value) do
+          {number, _} -> number
+          :error      -> default
+        end
+      :error ->
         default
-      n when is_integer(n) ->
-        n
-      n ->
-        case Integer.parse(n) do
-          {i, _} -> i
+    end
+  end
+
+  @doc """
+  Same as `get_env/3`, but returns the result as a float. If the value
+  cannot be converted to a float, the `default` value is returned instead.
+
+  ## Example
+
+      0.5 = #{inspect __MODULE__}.get_env_float(:my_app, :db_retry_interval)
+
+  """
+  @spec get_env_float(app | Keyword.t, key, float | nil) :: float | nil
+  def get_env_float(app, key, default \\ nil) do
+    case fetch_env(app, key) do
+      {:ok, number} when is_float(number) ->
+        number
+      {:ok, value} when is_binary(value) ->
+        case Float.parse(value) do
+          {number, _} -> number
           :error -> default
         end
+      :error ->
+        default
     end
   end
 end

@@ -13,7 +13,9 @@ following functions to the module where it is called:
 def fetch_env(key) :: {:ok, value} | :error
 def fetch_env!(key) :: value | no_return
 def get_env(key, value | nil) :: value
-def get_env_integer(key, integer | nil) :: integer
+def get_env_boolean(key, boolean | nil) :: boolean | nil
+def get_env_integer(key, integer | nil) :: integer | nil
+def get_env_float(key, float | nil) :: float | nil
 ```
 
 These functions fetch values from an application's environment or from
@@ -64,7 +66,7 @@ Documentation can be generated with [ExDoc](https://github.com/elixir-lang/ex_do
 by running:
 
     mix docs
-    
+
 The docs can also be found at [https://hexdocs.pm/app_config](https://hexdocs.pm/app_config).
 
 
