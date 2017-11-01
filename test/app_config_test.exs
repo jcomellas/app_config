@@ -37,6 +37,18 @@ defmodule AppConfigTest do
     assert %ArgumentError{} = catch_error(AppConfig.fetch_env!(env, :unknown_var))
   end
 
+  test "value from map" do
+    test_val = "12345"
+    env = %{dummy1: "ABC", test_var: test_val, dummy2: "DEF"}
+    assert {:ok, test_val} == AppConfig.fetch_env(env, :test_var)
+    assert :error == AppConfig.fetch_env(env, :unknown_var)
+    assert test_val == AppConfig.get_env(env, :test_var)
+    assert 12345 == AppConfig.get_env_integer(env, :test_var)
+    assert nil == AppConfig.get_env(env, :unknown_var)
+    assert test_val == AppConfig.fetch_env!(env, :test_var)
+    assert %ArgumentError{} = catch_error(AppConfig.fetch_env!(env, :unknown_var))
+  end
+
   test "value from system environment" do
     env_var = "TEST_VAR"
     test_val = "12345"

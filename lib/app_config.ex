@@ -119,8 +119,8 @@ defmodule AppConfig do
   @doc """
   Returns a tuple with the value for `key` in an application's environment,
   in a keyword list or in the OS environment. The first argument can either be
-  an atom with the name of the application or a keyword list with the different
-  configuration values.
+  an atom with the name of the application, a keyword list or a map with the
+  different configuration values.
 
   ## Returns
 
@@ -135,7 +135,7 @@ defmodule AppConfig do
 
   """
   @spec fetch_env(app | Keyword.t, key) :: {:ok, value} | :error
-  def fetch_env(env, key) when (is_atom(env) or is_list(env)) and is_atom(key) do
+  def fetch_env(env, key) when (is_atom(env) or is_list(env) or is_map(env)) and is_atom(key) do
     with {:ok, value} <- fetch(env, key) do
       get_env_value(value)
     end
@@ -146,6 +146,9 @@ defmodule AppConfig do
   end
   defp fetch(list, key) when is_list(list) do
     Keyword.fetch(list, key)
+  end
+  defp fetch(map, key) when is_map(map) do
+    Map.fetch(map, key)
   end
 
   @doc """
