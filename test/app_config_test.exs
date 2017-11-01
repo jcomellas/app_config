@@ -13,6 +13,22 @@ defmodule AppConfigTest do
 
   doctest AppConfig
 
+  test "nested value from application environment" do
+    test_val = "12345"
+    test_val_nested = %{map_key: [kw_key: test_val]}
+    :ok = Application.put_env(:my_test_app, :env_key, test_val_nested)
+    assert {:ok, test_val} == MyTestApp.fetch_env([:env_key, :map_key, :kw_key])
+    assert :error == MyTestApp.fetch_env([:unknown_var])
+    assert :error == MyTestApp.fetch_env([:env_key, :unknown_var])
+    assert :error == MyTestApp.fetch_env([:env_key, :map_key, :unknown_var])
+    assert :error == MyTestApp.fetch_env([:env_key, :map_key, :kw_key, :extra_key])
+    assert test_val == MyTestApp.get_env([:env_key, :map_key, :kw_key])
+    assert nil == MyTestApp.get_env([:env_key, :map_key, :kw_key, :extra_key])
+    assert 12345 == MyTestApp.get_env_integer([:env_key, :map_key, :kw_key])
+    assert test_val == MyTestApp.fetch_env!([:env_key, :map_key, :kw_key])
+    assert %ArgumentError{} = catch_error(MyTestApp.fetch_env!([:env_key, :map_key, :kw_key, :extra_key]))
+  end
+
   test "value from application environment" do
     test_val = "12345"
     :ok = Application.put_env(:my_test_app, :test_var, test_val)

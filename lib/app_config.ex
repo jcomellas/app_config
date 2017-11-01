@@ -120,7 +120,8 @@ defmodule AppConfig do
   Returns a tuple with the value for `key` in an application's environment,
   in a keyword list or in the OS environment. The first argument can either be
   an atom with the name of the application, a keyword list or a map with the
-  different configuration values.
+  different configuration values. `key` could be a list of keys in a nested
+  structure, in which case the value for the last key in the list is returned.
 
   ## Returns
 
@@ -132,14 +133,27 @@ defmodule AppConfig do
   ## Example
 
       {:ok, "VALUE"} = #{inspect __MODULE__}.fetch_env(:my_app, :test_var)
+      :ok = Application.put_env(:my_test_app, :test_var_1, %{ test_var_2: "VALUE" })
+      {:ok, "VALUE"} = #{inspect __MODULE__}.fetch_env(:my_app, [ :test_var_1, :test_var_2 ])
 
   """
-  @spec fetch_env(app | Keyword.t, key) :: {:ok, value} | :error
+  @spec fetch_env(app | Keyword.t, key | List.t) :: {:ok, value} | :error
   def fetch_env(env, key) when (is_atom(env) or is_list(env) or is_map(env)) and is_atom(key) do
     with {:ok, value} <- fetch(env, key) do
       get_env_value(value)
     end
   end
+  def fetch_env(env, [first_key | keys]) when is_atom(env) or is_list(env) or is_map(env) do
+    with {:ok, value} <- Enum.reduce(keys, fetch(env, first_key), &fetch_nested/2) do
+      get_env_value(value)
+    end
+  end
+
+  defp fetch_nested(key, {:ok, val}) when is_map(val) or is_list(val) do
+    fetch(val, key)
+  end
+  defp fetch_nested(_, {:ok, _}), do: :error
+  defp fetch_nested(_, :error), do: :error
 
   defp fetch(app, key) when is_atom(app) do
     Application.fetch_env(app, key)
