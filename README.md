@@ -100,6 +100,30 @@ be valid:
 "my_database" = MyConfig.get_env(:db_name, "unknown")
 ```
 
+The key can also be a list of atoms. The examples above could be converted to
+the following format using a key that is actually a list:
+
+```elixir
+config :my_app, My.Database,
+  host: {:system, "DB_HOST", "localhost"},
+  port: {:system, "DB_PORT", 5432}
+  user: {:system, "DB_USER"},
+  password: {:system, "DB_PASSWORD"},
+  name: "my_database",
+  retry_interval: {:system, "DB_RETRY_INTERVAL", 0.5}
+  replication: {:system, "DB_REPLICATION", false}
+```
+
+To retrieve the values, you'd then use the following code:
+
+```elixir
+"localhost" = MyConfig.get_env([My.Database, :host])
+5432 = MyConfig.get_env_integer([My.Database, :port])
+{:ok, "my_user"} = MyConfig.fetch_env([My.Database, :user])
+"guess_me" = MyConfig.fetch_env!([My.Database, :password])
+"my_database" = MyConfig.get_env([My.Database, :name], "unknown")
+```
+
 Most functions from the `AppConfig` module can also be called without using its
 macro. To do so, just call the functions directly by passing the application's
 name as the first argument. e.g.

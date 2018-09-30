@@ -66,7 +66,7 @@ defmodule AppConfig do
   The key can also be a list of atoms. The examples above could be converted to
   the following format using a key that is actually a list:
 
-      config My.Database,
+      config :my_app, My.Database,
         host: {:system, "DB_HOST", "localhost"},
         port: {:system, "DB_PORT", 5432}
         user: {:system, "DB_USER"},
