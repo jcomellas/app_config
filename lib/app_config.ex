@@ -63,6 +63,26 @@ defmodule AppConfig do
       "guess_me" = MyConfig.fetch_env!(:db_password)
       "my_database" = MyConfig.get_env(:db_name, "unknown")
 
+  The key can also be a list of atoms. The examples above could be converted to
+  the following format using a key that is actually a list:
+
+      config My.Database,
+        host: {:system, "DB_HOST", "localhost"},
+        port: {:system, "DB_PORT", 5432}
+        user: {:system, "DB_USER"},
+        password: {:system, "DB_PASSWORD"},
+        name: "my_database",
+        retry_interval: {:system, "DB_RETRY_INTERVAL", 0.5}
+        replication: {:system, "DB_REPLICATION", false}
+
+  To retrieve the values, you'd then use the following code:
+
+      "localhost" = MyConfig.get_env([My.Database, :host])
+      5432 = MyConfig.get_env_integer([My.Database, :port])
+      {:ok, "my_user"} = MyConfig.fetch_env([My.Database, :user])
+      "guess_me" = MyConfig.fetch_env!([My.Database, :password])
+      "my_database" = MyConfig.get_env([My.Database, :name], "unknown")
+
   Most functions from the `#{inspect __MODULE__}` module can also be called
   without using its macro. To do so, just call the functions directly by
   passing the application's name as the first argument. e.g.
@@ -76,7 +96,7 @@ defmodule AppConfig do
   """
 
   @type app :: Application.app
-  @type key :: Application.key
+  @type key :: Application.key | [Application.key]
   @type value :: Application.value
   @type var :: String.t
 
@@ -135,9 +155,17 @@ defmodule AppConfig do
 
   """
   @spec fetch_env(app | Keyword.t, key) :: {:ok, value} | :error
-  def fetch_env(env, key) when (is_atom(env) or is_list(env)) and is_atom(key) do
+  def fetch_env(env, key) when is_atom(key) and (is_atom(env) or is_list(env)) do
     with {:ok, value} <- fetch(env, key) do
       get_env_value(value)
+    end
+  end
+  def fetch_env(env, [key]) when is_atom(key) do
+    fetch_env(env, key)
+  end
+  def fetch_env(env, [key | tail]) when is_atom(key) do
+    with {:ok, keyword = [{key1, _value} | _tail]} when is_atom(key1) <- fetch(env, key) do
+      fetch_env(keyword, tail)
     end
   end
 

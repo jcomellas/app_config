@@ -13,7 +13,7 @@ defmodule AppConfigTest do
 
   doctest AppConfig
 
-  test "value from application environment" do
+  test "single value from application environment" do
     test_val = "12345"
     :ok = Application.put_env(:my_test_app, :test_var, test_val)
     assert {:ok, test_val} == MyTestApp.fetch_env(:test_var)
@@ -23,6 +23,17 @@ defmodule AppConfigTest do
     assert nil == MyTestApp.get_env(:unknown_var)
     assert test_val == MyTestApp.fetch_env!(:test_var)
     assert %ArgumentError{} = catch_error(MyTestApp.fetch_env!(:unknown_var))
+  end
+
+  test "value in a list from application environment" do
+    test_val = "12345"
+    :ok = Application.put_env(:my_test_app, :test_list, [{:test_var, test_val}, {:dummy, "xxx"}])
+    assert {:ok, test_val} == MyTestApp.fetch_env([:test_list, :test_var])
+    assert {:ok, "xxx"} == MyTestApp.fetch_env([:test_list, :dummy])
+    assert [{:test_var, test_val}, {:dummy, "xxx"}] == MyTestApp.get_env(:test_list)
+    assert test_val == MyTestApp.get_env([:test_list, :test_var])
+    assert 12345 == MyTestApp.get_env_integer([:test_list, :test_var])
+    assert test_val == MyTestApp.fetch_env!([:test_list, :test_var])
   end
 
   test "value from keyword list" do
