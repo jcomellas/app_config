@@ -98,7 +98,6 @@ defmodule AppConfig do
   @type app :: Application.app
   @type key :: Application.key | [Application.key]
   @type value :: Application.value
-  @type var :: String.t
 
   @doc false
   defmacro __using__(opts) do
@@ -208,7 +207,7 @@ defmodule AppConfig do
       {:ok, "VALUE"}
 
   """
-  @spec get_env_value({:system, var} | {:system, var, String.t} | term)
+  @spec get_env_value({:system, String.t} | {:system, String.t, String.t} | term)
     :: {:ok, term} | :error
   def get_env_value({:system, var}) do
     case System.get_env(var) do
