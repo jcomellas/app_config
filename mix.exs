@@ -2,19 +2,20 @@ defmodule AppConfig.Mixfile do
   use Mix.Project
 
   def project do
-    [app: :app_config,
-     version: "0.5.2",
-     elixir: "~> 1.5",
-     build_embedded: Mix.env == :prod,
-     start_permanent: Mix.env == :prod,
-     deps: deps(),
-     package: package(),
-     # Docs
-     name: "AppConfig",
-     source_url: "https://github.com/jcomellas/app_config",
-     homepage_url: "https://github.com/jcomellas/app_config",
-     docs: [main: "AppConfig",
-            extras: ["README.md"]]]
+    [
+      app: :app_config,
+      version: "0.5.2",
+      elixir: "~> 1.5",
+      build_embedded: Mix.env() == :prod,
+      start_permanent: Mix.env() == :prod,
+      deps: deps(),
+      package: package(),
+      # Docs
+      name: "AppConfig",
+      source_url: "https://github.com/jcomellas/app_config",
+      homepage_url: "https://github.com/jcomellas/app_config",
+      docs: [main: "AppConfig", extras: ["README.md"]]
+    ]
   end
 
   # Configuration for the OTP application
@@ -31,10 +32,12 @@ defmodule AppConfig.Mixfile do
   end
 
   defp package do
-    [files: ["lib", "config", "test", "mix.exs", "README*", "LICENSE*"],
-     description: "Elixir configuration module that simplifies access to environment variables",
-     maintainers: ["Juan Jose Comellas"],
-     licenses: ["Apache 2.0"],
-     links: %{"GitHub" => "https://github.com/jcomellas/app_config"}]
+    [
+      files: ["lib", "config", "test", "mix.exs", "README*", "LICENSE*"],
+      description: "Elixir configuration module that simplifies access to environment variables",
+      maintainers: ["Juan Jose Comellas"],
+      licenses: ["Apache 2.0"],
+      links: %{"GitHub" => "https://github.com/jcomellas/app_config"}
+    ]
   end
 end

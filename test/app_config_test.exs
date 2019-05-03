@@ -116,12 +116,14 @@ defmodule AppConfigTest do
       assert false == AppConfig.get_env_boolean(:my_test_app, :test_var)
       assert false == AppConfig.get_env_boolean(env, :test_var)
     end
+
     # Test synonyms for true.
     for test_val <- ["1", "true", "on", "yes", "enabled"] do
       :ok = System.put_env(env_var, test_val)
       assert true == AppConfig.get_env_boolean(:my_test_app, :test_var)
       assert true == AppConfig.get_env_boolean(env, :test_var)
     end
+
     # Delete the environment variable.
     :ok = System.delete_env(env_var)
     # Test with undefined env var and default value as a boolean.

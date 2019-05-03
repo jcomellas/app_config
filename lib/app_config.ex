@@ -22,17 +22,17 @@ defmodule AppConfig do
 
       {:system, "VAR", "default"}
 
-  The `#{inspect __MODULE__}` module is normally used from within the module
+  The `#{inspect(__MODULE__)}` module is normally used from within the module
   that implements the `Application` behaviour or from one used to access
   configuration values, and has to be defined in the following way:
 
       defmodule MyConfig do
-        use #{inspect __MODULE__}, otp_app: :my_app
+        use #{inspect(__MODULE__)}, otp_app: :my_app
         # [...]
       end
 
   The `otp_app` argument contains the name of the application where the functions
-  (added by the macro from the `#{inspect __MODULE__}` module) will look for
+  (added by the macro from the `#{inspect(__MODULE__)}` module) will look for
   configuration parameters.
 
   ## Examples
@@ -53,7 +53,7 @@ defmodule AppConfig do
       export DB_USER="my_user"
       export DB_PASSWORD="guess_me"
 
-  And assuming that the `MyConfig` module is using the `#{inspect __MODULE__}`
+  And assuming that the `MyConfig` module is using the `#{inspect(__MODULE__)}`
   macro, then the following expressions used to retrieve the values of the
   parameters would be valid:
 
@@ -83,11 +83,11 @@ defmodule AppConfig do
       "guess_me" = MyConfig.fetch_env!([My.Database, :password])
       "my_database" = MyConfig.get_env([My.Database, :name], "unknown")
 
-  Most functions from the `#{inspect __MODULE__}` module can also be called
+  Most functions from the `#{inspect(__MODULE__)}` module can also be called
   without using its macro. To do so, just call the functions directly by
   passing the application's name as the first argument. e.g.
 
-      #{inspect __MODULE__}.get_env(:my_app, :db_host)
+      #{inspect(__MODULE__)}.get_env(:my_app, :db_host)
 
   This module will come in handy especially when retrieving configuration
   values for applications running within Elixir/Erlang releases, as it simplifies
@@ -95,13 +95,14 @@ defmodule AppConfig do
   compile-time) from OS environment variables.
   """
 
-  @type app :: Application.app
-  @type key :: Application.key | [Application.key]
-  @type value :: Application.value
+  @type app :: Application.app()
+  @type key :: Application.key() | [Application.key()]
+  @type value :: Application.value()
 
   @doc false
   defmacro __using__(opts) do
     app = opts[:otp_app] || Application.get_application(__CALLER__.module)
+
     if app do
       quote do
         def get_env(key, default \\ nil) do
@@ -129,9 +130,10 @@ defmodule AppConfig do
         end
       end
     else
-      raise ArgumentError, "'otp_app' argument was not present in use of the " <>
-        "'#{inspect __MODULE__}' module and could not be deduced from the " <>
-        "'#{inspect __CALLER__.module}' caller module"
+      raise ArgumentError,
+            "'otp_app' argument was not present in use of the " <>
+              "'#{inspect(__MODULE__)}' module and could not be deduced from the " <>
+              "'#{inspect(__CALLER__.module)}' caller module"
     end
   end
 
@@ -150,18 +152,20 @@ defmodule AppConfig do
 
   ## Example
 
-      {:ok, "VALUE"} = #{inspect __MODULE__}.fetch_env(:my_app, :test_var)
+      {:ok, "VALUE"} = #{inspect(__MODULE__)}.fetch_env(:my_app, :test_var)
 
   """
-  @spec fetch_env(app | Keyword.t, key) :: {:ok, value} | :error
+  @spec fetch_env(app | Keyword.t(), key) :: {:ok, value} | :error
   def fetch_env(env, key) when is_atom(key) and (is_atom(env) or is_list(env)) do
     with {:ok, value} <- fetch(env, key) do
       get_env_value(value)
     end
   end
+
   def fetch_env(env, [key]) when is_atom(key) do
     fetch_env(env, key)
   end
+
   def fetch_env(env, [key | tail]) when is_atom(key) do
     with {:ok, keyword = [{key1, _value} | _tail]} when is_atom(key1) <- fetch(env, key) do
       fetch_env(keyword, tail)
@@ -171,6 +175,7 @@ defmodule AppConfig do
   defp fetch(app, key) when is_atom(app) do
     Application.fetch_env(app, key)
   end
+
   defp fetch(list, key) when is_list(list) do
     Keyword.fetch(list, key)
   end
@@ -197,30 +202,32 @@ defmodule AppConfig do
   ## Example
 
       iex> System.put_env("MY_VAR", "MY_VALUE")
-      ...> #{inspect __MODULE__}.get_env_value({:system, "MY_VAR"})
+      ...> #{inspect(__MODULE__)}.get_env_value({:system, "MY_VAR"})
       {:ok, "MY_VALUE"}
-      iex> #{inspect __MODULE__}.get_env_value({:system, "MY_UNSET_VAR"})
+      iex> #{inspect(__MODULE__)}.get_env_value({:system, "MY_UNSET_VAR"})
       :error
-      iex> #{inspect __MODULE__}.get_env_value({:system, "MY_UNSET_VAR", "DEFAULT"})
+      iex> #{inspect(__MODULE__)}.get_env_value({:system, "MY_UNSET_VAR", "DEFAULT"})
       {:ok, "DEFAULT"}
-      iex> #{inspect __MODULE__}.get_env_value("VALUE")
+      iex> #{inspect(__MODULE__)}.get_env_value("VALUE")
       {:ok, "VALUE"}
 
   """
-  @spec get_env_value({:system, String.t} | {:system, String.t, String.t} | term)
-    :: {:ok, term} | :error
+  @spec get_env_value({:system, String.t()} | {:system, String.t(), String.t()} | term) ::
+          {:ok, term} | :error
   def get_env_value({:system, var}) do
     case System.get_env(var) do
       nil -> :error
       value -> {:ok, value}
     end
   end
+
   def get_env_value({:system, var, default}) do
     case System.get_env(var) do
       nil -> {:ok, default}
       value -> {:ok, value}
     end
   end
+
   def get_env_value(value) do
     {:ok, value}
   end
@@ -239,18 +246,19 @@ defmodule AppConfig do
 
   ## Example
 
-      "VALUE" = #{inspect __MODULE__}.fetch_env!(:my_app, :test_var)
+      "VALUE" = #{inspect(__MODULE__)}.fetch_env!(:my_app, :test_var)
 
   """
-  @spec fetch_env!(app | Keyword.t, key) :: value | no_return
+  @spec fetch_env!(app | Keyword.t(), key) :: value | no_return
   def fetch_env!(app, key) do
     case fetch_env(app, key) do
       {:ok, value} ->
         value
+
       :error ->
         raise ArgumentError,
-          "application #{inspect app} is not loaded, " <>
-          "or the configuration parameter #{inspect key} is not set"
+              "application #{inspect(app)} is not loaded, " <>
+                "or the configuration parameter #{inspect(key)} is not set"
     end
   end
 
@@ -278,22 +286,22 @@ defmodule AppConfig do
 
       iex> {test_var, expected_value} = System.get_env() |> Enum.take(1) |> List.first()
       ...> Application.put_env(:myapp, :test_var, {:system, test_var})
-      ...> ^expected_value = #{inspect __MODULE__}.get_env(:myapp, :test_var)
+      ...> ^expected_value = #{inspect(__MODULE__)}.get_env(:myapp, :test_var)
       ...> :ok
       :ok
 
       iex> Application.put_env(:myapp, :test_var2, 1)
-      ...> 1 = #{inspect __MODULE__}.get_env(:myapp, :test_var2)
+      ...> 1 = #{inspect(__MODULE__)}.get_env(:myapp, :test_var2)
       1
 
-      iex> :default = #{inspect __MODULE__}.get_env(:myapp, :missing_var, :default)
+      iex> :default = #{inspect(__MODULE__)}.get_env(:myapp, :missing_var, :default)
       :default
   """
-  @spec get_env(app | Keyword.t, key, value | nil) :: value | nil
+  @spec get_env(app | Keyword.t(), key, value | nil) :: value | nil
   def get_env(app, key, default \\ nil) do
     case fetch_env(app, key) do
       {:ok, value} -> value
-      :error       -> default
+      :error -> default
     end
   end
 
@@ -304,30 +312,32 @@ defmodule AppConfig do
 
   ## Example
 
-      false = #{inspect __MODULE__}.get_env_boolean(:my_app, :db_replication)
+      false = #{inspect(__MODULE__)}.get_env_boolean(:my_app, :db_replication)
 
   """
-  @spec get_env_boolean(app | Keyword.t, key, boolean | nil) :: boolean | nil
+  @spec get_env_boolean(app | Keyword.t(), key, boolean | nil) :: boolean | nil
   def get_env_boolean(app, key, default \\ nil) do
     case fetch_env(app, key) do
       {:ok, flag} when is_boolean(flag) ->
         flag
+
       {:ok, value} when is_binary(value) ->
         value
         |> String.downcase()
         |> case do
-          "0"        -> false
-          "false"    -> false
-          "no"       -> false
-          "off"      -> false
+          "0" -> false
+          "false" -> false
+          "no" -> false
+          "off" -> false
           "disabled" -> false
-          "1"        -> true
-          "true"     -> true
-          "yes"      -> true
-          "on"       -> true
-          "enabled"  -> true
-          _          -> default
+          "1" -> true
+          "true" -> true
+          "yes" -> true
+          "on" -> true
+          "enabled" -> true
+          _ -> default
         end
+
       :error ->
         default
     end
@@ -339,19 +349,21 @@ defmodule AppConfig do
 
   ## Example
 
-      5432 = #{inspect __MODULE__}.get_env_integer(:my_app, :db_port)
+      5432 = #{inspect(__MODULE__)}.get_env_integer(:my_app, :db_port)
 
   """
-  @spec get_env_integer(app | Keyword.t, key, integer | nil) :: integer | nil
+  @spec get_env_integer(app | Keyword.t(), key, integer | nil) :: integer | nil
   def get_env_integer(app, key, default \\ nil) do
     case fetch_env(app, key) do
       {:ok, number} when is_integer(number) ->
         number
+
       {:ok, value} when is_binary(value) ->
         case Integer.parse(value) do
           {number, _} -> number
-          :error      -> default
+          :error -> default
         end
+
       :error ->
         default
     end
@@ -363,19 +375,21 @@ defmodule AppConfig do
 
   ## Example
 
-      0.5 = #{inspect __MODULE__}.get_env_float(:my_app, :db_retry_interval)
+      0.5 = #{inspect(__MODULE__)}.get_env_float(:my_app, :db_retry_interval)
 
   """
-  @spec get_env_float(app | Keyword.t, key, float | nil) :: float | nil
+  @spec get_env_float(app | Keyword.t(), key, float | nil) :: float | nil
   def get_env_float(app, key, default \\ nil) do
     case fetch_env(app, key) do
       {:ok, number} when is_float(number) ->
         number
+
       {:ok, value} when is_binary(value) ->
         case Float.parse(value) do
           {number, _} -> number
           :error -> default
         end
+
       :error ->
         default
     end
